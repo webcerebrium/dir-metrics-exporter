@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+	"os/exec"
 	"strings"
 )
 
@@ -35,11 +35,24 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Please go to /metrics")
 }
 
-func getFolderFiles(folder string) int64 {
-	return 0
+func getFolderFiles(folder string) string {
+	cmd := exec.Command("sh", "-c", "find "+folder+" -type f 2>&1 | grep -v denied | wc -l")
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+		return "0"
+	}
+	return strings.TrimSpace(string(stdoutStderr))
 }
-func getFolderSize(folder string) int64 {
-	return 0
+
+func getFolderSize(folder string) string {
+	cmd := exec.Command("sh", "-c", "du --max-depth=0 "+folder+" 2>&1 | grep -v denied")
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+		return "0"
+	}
+	return strings.TrimSpace(string(stdoutStderr))
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,11 +70,11 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		alias + "_folder_info{path=\"" + folder + "\"} 1",
 		"# HELP " + alias + "_folder_files_count Number of files in the folder",
 		"# TYPE " + alias + "_folder_files_count counter",
-		alias + "_folder_files_count " + strconv.FormatInt(getFolderFiles(folder), 10),
+		alias + "_folder_files_count " + getFolderFiles(folder),
 		"# HELP " + alias + "_folder_disk_size Folder Disk Size",
 		"# TYPE " + alias + "_folder_disk_size counter",
-		alias + "_folder_disk_size " + strconv.FormatInt(getFolderSize(folder), 10),
+		alias + "_folder_disk_size " + getFolderSize(folder),
 	}, "\n")
-	fmt.Println(res)
+	// fmt.Println(res)
 	io.WriteString(w, res)
 }
