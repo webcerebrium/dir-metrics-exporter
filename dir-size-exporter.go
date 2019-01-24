@@ -6,12 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
 func main() {
+	http.HandleFunc("/metrics", metricsHandler)
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/metrics", indexHandler)
 
 	folder, okFolder := os.LookupEnv("FOLDER")
 	if !okFolder {
@@ -19,7 +20,7 @@ func main() {
 	}
 	port, okPort := os.LookupEnv("PORT")
 	if !okPort {
-		port = "8080"
+		port = "9164"
 	}
 	host, okH := os.LookupEnv("HOST")
 	if !okH {
@@ -50,10 +51,17 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	io.WriteString(w,
-		strings.Join([]string{
-			alias+".folder.path "+(folder),
-			alias+".folder.files "+string(getFolderFiles(folder)),
-			alias+".folder.size "+string(getFolderSize(folder))
-		 "\n"))
+	res := strings.Join([]string{
+		"# HELP " + alias + "_folder_info Path Information",
+		"# TYPE " + alias + "_folder_info gauge",
+		alias + "_folder_info{path=\"" + folder + "\"} 1",
+		"# HELP " + alias + "_folder_files_count Number of files in the folder",
+		"# TYPE " + alias + "_folder_files_count counter",
+		alias + "_folder_files_count " + strconv.FormatInt(getFolderFiles(folder), 10),
+		"# HELP " + alias + "_folder_disk_size Folder Disk Size",
+		"# TYPE " + alias + "_folder_disk_size counter",
+		alias + "_folder_disk_size " + strconv.FormatInt(getFolderSize(folder), 10),
+	}, "\n")
+	fmt.Println(res)
+	io.WriteString(w, res)
 }
