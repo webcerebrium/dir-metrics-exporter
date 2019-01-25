@@ -53,7 +53,7 @@ func getFolderFiles(folder string) string {
 }
 
 func getFolderSize(folder string) string {
-	cmd := exec.Command("sh", "-c", "du --max-depth=0 "+folder+" 2>&1 | grep -v denied")
+	cmd := exec.Command("sh", "-c", "du --max-depth=0 "+folder+" 2>&1 | grep -v denied | cut -f1")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
