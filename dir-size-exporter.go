@@ -31,8 +31,15 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	io.WriteString(w, "Please go to /metrics")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	io.WriteString(w, `<!doctype html>
+	<html>
+		<head><title>Dir Info Exporter</title></head>
+		<body>
+			<h1>Dir Info Exporter</h1>
+			<p><a href="/metrics">Metrics</a></p>
+		</body>
+	</html>`)
 }
 
 func getFolderFiles(folder string) string {
